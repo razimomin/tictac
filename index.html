@@ -3,34 +3,17 @@
 
 <head>
     <title>Socket.IO chat</title>
-    <style>
-        /* Styling for the game board */
-        #board {
-            display: grid;
-            grid-template-columns: repeat(3, 100px);
-            grid-template-rows: repeat(3, 100px);
-            gap: 2px;
-        }
-
-        .cell {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: bold;
-            border: 1px solid black;
-            cursor: pointer;
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
 </head>
 
 <body>
-    <div id="board">
-
+    <br>
+    <div class="container">
+        <button onclick="startGame()" class="btn btn-outline-dark">Start Game</button>
     </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="frontend.js"></script>
-
 </body>
 
 </html>

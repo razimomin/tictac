@@ -8,6 +8,7 @@ app.use(express.static(__dirname));
 app.get('/', (req, res) => {
 
     res.sendFile(__dirname + '/index.html');
+    res.sendFile(__dirname + '/game.html');
 });
 
 // Game state
@@ -18,8 +19,15 @@ io.on('connection', (socket) => {
 
     socket.on('joinMatchmaking', () => {
         // Add the player to the matchmaking queue
-        matchmakingQueue.push(socket);
-        tryMatchPlayers();
+        console.log('match making start');
+        const [existSocketIdCheck] = matchmakingQueue.filter((items) => {
+            return items.id === socket.id
+        })
+        if (!existSocketIdCheck) {
+            matchmakingQueue.push(socket);
+            tryMatchPlayers();
+        }
+
     });
 
     socket.on('move', (cellIndex) => {

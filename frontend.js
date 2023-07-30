@@ -13,16 +13,20 @@ socket.on('connect', () => {
         cell.addEventListener('click', () => {
             socket.emit('move', i);
         });
-        board.appendChild(cell);
+        if (board) {
+            board.appendChild(cell);
+        }
         cells.push(cell);
     }
 });
 
 socket.on('updateBoard', (boardState) => {
     // Update the UI with the new board state
-    const cells = board.getElementsByClassName('cell');
-    for (let i = 0; i < cells.length; i++) {
-        cells[i].textContent = boardState[i];
+    if (board) {
+        const cells = board.getElementsByClassName('cell');
+        for (let i = 0; i < cells.length; i++) {
+            cells[i].textContent = boardState[i];
+        }
     }
 });
 
@@ -36,3 +40,12 @@ socket.on('gameOver', (result) => {
         alert('You lose!');
     }
 });
+socket.on('matchFound', () => {
+    console.log('match found');
+})
+socket.on('updateBoard', (data) => {
+    console.log({ data });
+})
+const startGame = () => {
+    socket.emit('joinMatchmaking');
+}
