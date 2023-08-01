@@ -19,7 +19,7 @@ io.on('connection', (socket) => {
 
     socket.on('joinMatchmaking', () => {
         // Add the player to the matchmaking queue
-        console.log('match making start');
+        // console.log('match making start');
         const [existSocketIdCheck] = matchmakingQueue.filter((items) => {
             return items.id === socket.id
         })
@@ -38,6 +38,7 @@ io.on('connection', (socket) => {
         }
 
         // Check if it's the player's turn and the move is valid
+        console.log(room);
         if (room.players[room.currentPlayerIndex] === socket &&
             isValidMove(room.board, cellIndex)) {
             // Update the board with the move
@@ -45,7 +46,10 @@ io.on('connection', (socket) => {
             io.to(room.id).emit('updateBoard', room.board);
 
             // Check if the current player wins or the game is a draw
-            if (checkWin(room.board, room.currentPlayerIndex) ||
+            // console.log(room.board[cellIndex]);
+            // console.log(room.board);
+            // console.log('win', checkWin(room.board, room.currentPlayerIndex));
+            if (checkWin(room.board, room.board[cellIndex]) ||
                 !room.board.includes('')) {
                 io.to(room.id).emit('gameOver', 'win');
                 io.to(room.opponent(socket)).emit('gameOver', 'lose');
@@ -116,8 +120,23 @@ function isValidMove(board, cellIndex) {
     return board[cellIndex] === '';
 }
 
-function checkWin(board, currentPlayerIndex) {
-    // Implement win-checking logic here
+function checkWin(board, player) {
+
+    const winningCombinations = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6]
+    ];
+
+    return winningCombinations.some(combination => {
+        console.log(player);
+        return combination.every(cellIndex => board[cellIndex] === player);
+    });
 }
 
 function resetGameRoom(room) {
