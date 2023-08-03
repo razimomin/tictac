@@ -20,6 +20,7 @@ socket.on('connect', () => {
 
 socket.on('gameOver', (result) => {
     // Display the game result (win, draw, or lose)
+    console.log({result});
     if (result === 'win') {
         alert('You win!');
     } else if (result === 'draw') {
@@ -55,7 +56,7 @@ const startGame = () => {
 const moveCall = (value) => {
     socket.emit('move', value);
 }
-socket.on('gameOver', (data) => {
-    console.log(data);
-})
+// socket.on('gameOver', (data) => {
+//     console.log(data);
+// })
 

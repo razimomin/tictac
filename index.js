@@ -38,7 +38,8 @@ io.on('connection', (socket) => {
         }
 
         // Check if it's the player's turn and the move is valid
-        console.log(room);
+      
+        const [currentId,opponent] = getOpponentId(room);
         if (room.players[room.currentPlayerIndex] === socket &&
             isValidMove(room.board, cellIndex)) {
             // Update the board with the move
@@ -46,13 +47,11 @@ io.on('connection', (socket) => {
             io.to(room.id).emit('updateBoard', room.board);
 
             // Check if the current player wins or the game is a draw
-            // console.log(room.board[cellIndex]);
-            // console.log(room.board);
-            // console.log('win', checkWin(room.board, room.currentPlayerIndex));
+            
             if (checkWin(room.board, room.board[cellIndex]) ||
                 !room.board.includes('')) {
-                io.to(room.id).emit('gameOver', 'win');
-                io.to(room.opponent(socket)).emit('gameOver', 'lose');
+                io.to(socket.id).emit('gameOver', 'win');
+                io.to(opponent.id).emit('gameOver', 'lose');
                 resetGameRoom(room);
             } else {
                 // Switch to the next player's turn
@@ -60,7 +59,11 @@ io.on('connection', (socket) => {
             }
         }
     });
-
+function getOpponentId(room){
+    const currentId = room.players[room.currentPlayerIndex].id;
+    const [opponent] = room.players.filter((items)=>items.id !== currentId);
+    return [currentId,opponent];
+}
     socket.on('disconnect', () => {
         console.log('A user disconnected.');
 
@@ -92,17 +95,16 @@ function tryMatchPlayers() {
             id: roomId,
             board: Array(9).fill(''),
             players: [player1, player2],
-            currentPlayerIndex: 0,
-            opponent(socket) {
-                return this.players[1 - this.players.indexOf(socket)];
-            }
+            currentPlayerIndex: 0
+            // opponent(socket) {
+            //     return this.players[1 - this.players.indexOf(socket)];
+            // }
         };
 
         // Notify the players about the match and start the game
         player1.join(roomId);
         player2.join(roomId);
-        player1.emit('matchFound', roomId);
-        player2.emit('matchFound', roomId);
+        io.in(roomId).emit('matchFound',roomId);
         io.to(roomId).emit('updateBoard', gameRooms[roomId].board);
     }
 }
@@ -134,8 +136,12 @@ function checkWin(board, player) {
     ];
 
     return winningCombinations.some(combination => {
-        console.log(player);
-        return combination.every(cellIndex => board[cellIndex] === player);
+        console.log(board);
+        console.log('==');
+        console.log(winningCombinations);
+        return combination.every(cellIndex => 
+            board[cellIndex] === player
+            );
     });
 }
 
