@@ -38,8 +38,8 @@ io.on('connection', (socket) => {
         }
 
         // Check if it's the player's turn and the move is valid
-      
-        const [currentId,opponent] = getOpponentId(room);
+
+        const [currentId, opponent] = getOpponentId(room);
         if (room.players[room.currentPlayerIndex] === socket &&
             isValidMove(room.board, cellIndex)) {
             // Update the board with the move
@@ -47,7 +47,7 @@ io.on('connection', (socket) => {
             io.to(room.id).emit('updateBoard', room.board);
 
             // Check if the current player wins or the game is a draw
-            
+
             if (checkWin(room.board, room.board[cellIndex]) ||
                 !room.board.includes('')) {
                 io.to(socket.id).emit('gameOver', 'win');
@@ -59,11 +59,11 @@ io.on('connection', (socket) => {
             }
         }
     });
-function getOpponentId(room){
-    const currentId = room.players[room.currentPlayerIndex].id;
-    const [opponent] = room.players.filter((items)=>items.id !== currentId);
-    return [currentId,opponent];
-}
+    function getOpponentId(room) {
+        const currentId = room.players[room.currentPlayerIndex].id;
+        const [opponent] = room.players.filter((items) => items.id !== currentId);
+        return [currentId, opponent];
+    }
     socket.on('disconnect', () => {
         console.log('A user disconnected.');
 
@@ -100,11 +100,13 @@ function tryMatchPlayers() {
             //     return this.players[1 - this.players.indexOf(socket)];
             // }
         };
-
+        gameRooms[roomId].players.forEach(element => {
+            element.join(roomId);
+        });
         // Notify the players about the match and start the game
-        player1.join(roomId);
-        player2.join(roomId);
-        io.in(roomId).emit('matchFound',roomId);
+        // player1.join(roomId);
+        // player2.join(roomId);
+        io.in(roomId).emit('matchFound', roomId);
         io.to(roomId).emit('updateBoard', gameRooms[roomId].board);
     }
 }
@@ -139,9 +141,9 @@ function checkWin(board, player) {
         console.log(board);
         console.log('==');
         console.log(winningCombinations);
-        return combination.every(cellIndex => 
+        return combination.every(cellIndex =>
             board[cellIndex] === player
-            );
+        );
     });
 }
 
