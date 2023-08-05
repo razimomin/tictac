@@ -20,7 +20,7 @@ socket.on('connect', () => {
 
 socket.on('gameOver', (result) => {
     // Display the game result (win, draw, or lose)
-    console.log({result});
+    console.log({ result });
     if (result === 'win') {
         alert('You win!');
     } else if (result === 'draw') {
@@ -31,6 +31,11 @@ socket.on('gameOver', (result) => {
 });
 socket.on('matchFound', (data) => {
     console.log('match found', data);
+    document.getElementById('waitingTime').innerHTML = '';
+    if (document.getElementById('matchStartBtn')) {
+        document.getElementById('matchStartBtn').remove();
+    }
+
 })
 socket.on('updateBoard', (data) => {
     console.log({ data });
@@ -56,6 +61,10 @@ const startGame = () => {
 const moveCall = (value) => {
     socket.emit('move', value);
 }
+socket.on('searchUser', (text) => {
+    document.querySelector('#waitingTime').innerHTML = text;
+    document.querySelector('#matchStartBtn').remove();
+})
 // socket.on('gameOver', (data) => {
 //     console.log(data);
 // })

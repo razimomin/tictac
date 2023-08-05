@@ -108,6 +108,8 @@ function tryMatchPlayers() {
         // player2.join(roomId);
         io.in(roomId).emit('matchFound', roomId);
         io.to(roomId).emit('updateBoard', gameRooms[roomId].board);
+    } else {
+        io.to(matchmakingQueue[0].id).emit('searchUser', 'waiting for opponent');
     }
 }
 
@@ -138,9 +140,9 @@ function checkWin(board, player) {
     ];
 
     return winningCombinations.some(combination => {
-        console.log(board);
-        console.log('==');
-        console.log(winningCombinations);
+        // console.log(board);
+        // console.log('==');
+        // console.log(winningCombinations);
         return combination.every(cellIndex =>
             board[cellIndex] === player
         );
