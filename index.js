@@ -44,21 +44,29 @@ io.on('connection', (socket) => {
             isValidMove(room.board, cellIndex)) {
             // Update the board with the move
             room.board[cellIndex] = room.currentPlayerIndex === 0 ? 'X' : 'O';
-            io.to(room.id).emit('updateBoard', room.board);
+            const res = { currentPLayerSocketId: opponent.id, boardData: room.board }
+            io.in(room.id).emit('updateBoard', res);
 
             // Check if the current player wins or the game is a draw
-
-            if (checkWin(room.board, room.board[cellIndex]) ||
-                !room.board.includes('')) {
-                io.to(socket.id).emit('gameOver', 'win');
-                io.to(opponent.id).emit('gameOver', 'lose');
+            console.log(new Date(room.matchEndTime));
+            if (checkWin(room.board, room.board[cellIndex]) || !room.board.includes('') || new Date() > room.matchEndTime) {
                 resetGameRoom(room);
+                if (!room.board.includes('') || new Date() > room.matchEndTime) {
+                    socketResponseToId(socket.id, 'gameOver', 2); // 0 won,1 loss,2 draw
+                    socketResponseToId(opponent.id, 'gameOver', 2);
+                    return;
+                }
+                socketResponseToId(socket.id, 'gameOver', 0);
+                socketResponseToId(opponent.id, 'gameOver', 1);
             } else {
                 // Switch to the next player's turn
                 room.currentPlayerIndex = 1 - room.currentPlayerIndex;
             }
         }
     });
+    function socketResponseToId(socketId, eventName, data = '') {
+        io.to(socketId).emit(eventName, data);
+    }
     function getOpponentId(room) {
         const currentId = room.players[room.currentPlayerIndex].id;
         const [opponent] = room.players.filter((items) => items.id !== currentId);
@@ -66,17 +74,15 @@ io.on('connection', (socket) => {
     }
     socket.on('disconnect', () => {
         console.log('A user disconnected.');
-
-        // Remove the player from the matchmaking queue
-        const index = matchmakingQueue.indexOf(socket);
-        if (index !== -1) {
-            matchmakingQueue.splice(index, 1);
+        if (matchmakingQueue.length) {
+            matchmakingQueue = [];
         }
-
+        // console.log(matchmakingQueue);
         // Handle the player leaving a game room
         const room = getRoomBySocket(socket);
         if (room) {
-            io.to(room.id).emit('gameOver', 'win'); // The opponent wins by default
+            const [opponentSocket] = room.players.filter((items) => items.id !== socket.id);
+            socketResponseToId(opponentSocket.id, 'gameOver', 0);
             resetGameRoom(room);
         }
     });
@@ -86,6 +92,8 @@ function tryMatchPlayers() {
     // Check if there are at least two players in the queue
     if (matchmakingQueue.length >= 2) {
         // Pair the first two players in the queue and create a match room
+        var matchEndTime = new Date();
+        matchEndTime.setMinutes(matchEndTime.getMinutes() + 1);
         const player1 = matchmakingQueue.shift();
         const player2 = matchmakingQueue.shift();
         const roomId = generateRoomId();
@@ -95,19 +103,21 @@ function tryMatchPlayers() {
             id: roomId,
             board: Array(9).fill(''),
             players: [player1, player2],
-            currentPlayerIndex: 0
-            // opponent(socket) {
-            //     return this.players[1 - this.players.indexOf(socket)];
-            // }
+            currentPlayerIndex: 0,
+            matchEndTime
         };
         gameRooms[roomId].players.forEach(element => {
             element.join(roomId);
         });
         // Notify the players about the match and start the game
-        // player1.join(roomId);
-        // player2.join(roomId);
         io.in(roomId).emit('matchFound', roomId);
-        io.to(roomId).emit('updateBoard', gameRooms[roomId].board);
+        const currentPLayerSocketId = gameRooms[roomId].players[0].id;
+        const res = {
+            boardData: gameRooms[roomId].board,
+            currentPLayerSocketId,
+            matchEndTime
+        }
+        io.to(roomId).emit('updateBoard', res);
     } else {
         io.to(matchmakingQueue[0].id).emit('searchUser', 'waiting for opponent');
     }
@@ -140,9 +150,6 @@ function checkWin(board, player) {
     ];
 
     return winningCombinations.some(combination => {
-        // console.log(board);
-        // console.log('==');
-        // console.log(winningCombinations);
         return combination.every(cellIndex =>
             board[cellIndex] === player
         );
